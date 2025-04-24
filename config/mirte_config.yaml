@@ -1,0 +1,10 @@
+/mirte_arborist_node:
+  ros__parameters:
+    action_name: "behavior_server" # Optional (defaults to `bt_action_server`)
+    behavior_trees:
+      - rebet_mirte/trees
+    plugins:
+      - rebet_mirte/bt_plugins
+ 
+
+
