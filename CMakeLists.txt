@@ -85,8 +85,6 @@ install(DIRECTORY
   launch
   config
   trees
-  models
-  worlds
   DESTINATION share/${PROJECT_NAME}/
 )
 
