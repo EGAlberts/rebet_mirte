@@ -1,0 +1,75 @@
+nav2_velocity_smoother:
+  artifacts:
+    velocity_smoother:
+      node: /velocity_smoother
+      publishers:
+        'cmd_vel':
+          type: 'geometry_msgs/msg/Twist'
+          qos:
+          # profile:
+          # history: UNKNOWN
+          # depth:
+            reliability: reliable
+            durability: volatile
+        'velocity_smoother/transition_event':
+          type: 'lifecycle_msgs/msg/TransitionEvent'
+          qos:
+          # profile:
+          # history: UNKNOWN
+          # depth:
+            reliability: reliable
+            durability: volatile
+      subscribers:
+        'cmd_vel_nav':
+          type: 'geometry_msgs/msg/Twist'
+      serviceservers:
+        'velocity_smoother/change_state':
+          type: 'lifecycle_msgs/srv/ChangeState'
+        'velocity_smoother/get_available_states':
+          type: 'lifecycle_msgs/srv/GetAvailableStates'
+        'velocity_smoother/get_available_transitions':
+          type: 'lifecycle_msgs/srv/GetAvailableTransitions'
+        'velocity_smoother/get_state':
+          type: 'lifecycle_msgs/srv/GetState'
+        'velocity_smoother/get_transition_graph':
+          type: 'lifecycle_msgs/srv/GetAvailableTransitions'
+      parameters:
+        '/bond_disable_heartbeat_timeout':
+          type: Boolean
+          value: true
+        'deadband_velocity':
+          type: Array[Double]
+          value: [0.0, 0.0, 0.0]
+        'feedback':
+          type: String
+          value: "OPEN_LOOP"
+        'max_accel':
+          type: Array[Double]
+          value: [2.5, 0.0, 3.2]
+        'max_decel':
+          type: Array[Double]
+          value: [-2.5, 0.0, -3.2]
+        'max_velocity':
+          type: Array[Double]
+          value: [0.26, 0.0, 1.0]
+        'min_velocity':
+          type: Array[Double]
+          value: [-0.26, 0.0, -1.0]
+        'odom_duration':
+          type: Double
+          value: 0.1
+        'odom_topic':
+          type: String
+          value: "odom"
+        'scale_velocities':
+          type: Boolean
+          value: false
+        'smoothing_frequency':
+          type: Double
+          value: 20.0
+        'use_sim_time':
+          type: Boolean
+          value: true
+        'velocity_timeout':
+          type: Double
+          value: 1.0

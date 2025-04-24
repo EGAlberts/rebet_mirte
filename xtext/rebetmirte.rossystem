@@ -1,0 +1,7 @@
+nav2: 
+  nodes:
+    velocity_smoother:
+      from: "nav2_velocity_smoother./velocity_smoother" #From .ros2 file
+      parameters:
+        - max_velocity: "velocity_smoother::max_velocity"
+          value: [0.26, 0.0, 1.0]

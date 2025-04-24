@@ -85,6 +85,7 @@ install(DIRECTORY
   launch
   config
   trees
+  xtext
   DESTINATION share/${PROJECT_NAME}/
 )
 
