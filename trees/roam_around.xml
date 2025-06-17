@@ -2,14 +2,14 @@
 <root BTCPP_format="4" main_tree_to_execute="ROAM">
   	<BehaviorTree ID="ROAM">
 		<Repeat num_cycles="5">
-				<AdaptOnConditionAny child_status="RUNNING" adaptation_type="Tactical" period="2">							
+				<!-- <AdaptOnConditionAny child_status="RUNNING" adaptation_type="Tactical" period="2">							 -->
 					<Sequence>	
-						<roamTo pose="-8.0;1.7;0;0;0;0;0;" action_name="navigate_to_pose"/>
-						<roamTo pose="-6.1;4.1;0;0;0;0;0;" action_name="navigate_to_pose"/>
-						<roamTo pose="-0.5;4.5;0;0;0;0;0;" action_name="navigate_to_pose"/>
-						<roamTo pose="0.0;0.0;0;0;0;0;0;" action_name="navigate_to_pose"/>
+						<roamTo pose="-8.0;1.7;0;0;0;0;0;" action_name="navigate_to_pose" planner="frog_navigate_to_pose.xml"/>
+						<roamTo pose="-6.1;4.1;0;0;0;0;0;" action_name="navigate_to_pose" planner="duck_navigate_to_pose.xml"/>
+						<!-- <roamTo pose="-0.5;4.5;0;0;0;0;0;" action_name="navigate_to_pose"/>
+						<roamTo pose="0.0;0.0;0;0;0;0;0;" action_name="navigate_to_pose"/> -->
 					</Sequence>
-				</AdaptOnConditionAny>
+				<!-- </AdaptOnConditionAny> -->
 		</Repeat>
   </BehaviorTree>
 </root>

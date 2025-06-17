@@ -1,0 +1,190 @@
+define 
+
+ros_system sub attribute,
+    value string;
+
+name sub attribute,
+    abstract,
+    value string;
+
+resolution_model_name sub name;
+tactic_name sub name;
+rule_name sub name;
+term_name sub name;
+variant_name sub name;
+node_name sub name;
+parameter_name sub name;
+
+tactic_period sub attribute,
+    value double;
+
+tactic_resolution_model sub attribute,
+    value string;
+
+tactic_select_variant sub attribute,
+    value string;
+
+expression_valid sub attribute,
+    value boolean;
+rule_valid sub attribute,
+    value boolean;
+
+term sub attribute,
+    value string;
+
+lhs-term sub attribute,
+    value string;
+
+rhs-term sub attribute,
+    value string;
+
+operator sub attribute,
+    value string,
+    regex "^(<|<=|>|>=|==|!=)";
+
+term_value sub attribute,
+    value double;
+
+parameter-value sub attribute,
+    value string;
+    
+parameter-type sub attribute,
+    value string,
+    regex "^(boolean|boolean_array|double|double_array|long|long_array|string|string_array)$";
+
+lifecycle-state sub attribute,
+    value string,
+    regex "^(unconfigured|inactive|active|finalized)$";
+
+### Relations
+tactic_rule sub relation,
+    owns rule_name @key,
+    owns rule_valid,
+    relates tactic,
+    relates antecedent,
+    relates consequent;
+
+expression sub relation,
+    abstract,
+    owns expression_valid,
+    plays tactic_rule:antecedent;
+
+and_expression sub expression,
+    relates expression,
+    plays tactic_rule:consequent;
+    
+or_expression sub expression,
+    relates expression;
+    
+inequality_expression sub expression,
+    owns operator,
+    relates lhs_term,
+    relates rhs_term,
+    plays and_expression:expression,
+    plays or_expression:expression;
+
+resolution_model sub relation,
+    owns resolution_model_name @key,
+    owns ros_system,
+    relates tactic,
+    relates variant_resolution;
+
+variant_resolution sub relation,
+    owns variant_name @key,
+    relates resolution_action,
+    plays resolution_model:variant_resolution;
+
+### Entities
+Tactic sub entity,
+    owns tactic_name @key,
+    owns tactic_period,
+    plays tactic_rule:tactic,
+    plays resolution_model:tactic;
+
+Term sub entity,
+    owns term_value,
+    owns term_name,
+    plays tactic_rule:consequent,
+    plays inequality_expression:lhs_term,
+    plays inequality_expression:rhs_term;
+
+ResolutionAction sub entity,
+    abstract,
+    owns node_name,
+    plays variant_resolution:resolution_action;
+
+SetParameter sub ResolutionAction,
+    owns parameter_name,
+    owns parameter-value,
+    owns parameter-type;
+    
+SetLifecycle sub ResolutionAction,
+    owns lifecycle-state;
+
+# rules
+rule tactic_rule_valid:
+    when {
+        $tr (antecedent: $a) isa tactic_rule;
+        $a isa expression, has expression_valid true;
+    } then {
+        $tr has rule_valid true;
+    };
+
+rule and_epression_valid:
+    when {
+        $and_exp (expression: $e) isa and_expression;
+        not {
+            $e has expression_valid false;  
+        };
+    } then {
+        $and_exp has expression_valid true; # will return true when there is no measured values
+    };
+
+rule or_epression_valid:
+    when {
+        $or_exp (expression: $e) isa or_expression;
+        $e has expression_valid true;
+    } then {
+        $or_exp has expression_valid true;
+    };
+
+rule inequality_expression_valid:
+    when {
+        $ineq_exp (lhs_term: $t_lhs, rhs_term: $t_rhs) isa inequality_expression;
+        $t_lhs has term_value $lhs_value;
+        $t_rhs has term_value $rhs_value;
+        {
+            $ineq_exp has operator ">";
+            $lhs_value > $rhs_value;
+        } or {
+            $ineq_exp has operator "<";
+            $lhs_value < $rhs_value;
+        };
+    } then {
+        $ineq_exp has expression_valid  true;
+    };
+    
+rule inequality_expression_invalid:
+    when {
+        $ineq_exp (lhs_term: $t_lhs, rhs_term: $t_rhs) isa inequality_expression;
+        {
+            not { $t_lhs has term_value $lhs_value;};
+           
+        } or {
+             not { $t_rhs has term_value $rhs_value;};
+        } or {
+            $ineq_exp has operator ">";
+            $t_lhs has term_value $lhs_value;
+            $t_rhs has term_value $rhs_value;
+            $lhs_value <= $rhs_value;
+        } or {
+            $ineq_exp has operator "<";
+            $t_lhs has term_value $lhs_value;
+            $t_rhs has term_value $rhs_value;
+            $lhs_value >= $rhs_value;
+        };
+    } then {
+        $ineq_exp has expression_valid  false;
+    };
+
+

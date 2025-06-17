@@ -56,7 +56,7 @@ def generate_launch_description():
     )
 
     trees_path = os.path.join(
-        get_package_share_directory("rebet_frog"),
+        get_package_share_directory("rebet_mirte"),
         "trees",
         "nav2",
     )

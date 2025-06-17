@@ -1,0 +1,8 @@
+/adaptation_engine:
+  ros__parameters:
+    tactics_path: "/home/ega/test3.tactics"
+    resolution_path: "/home/ega/rebetmc.resolution"
+    ros_path: ["/home/ega/common_msgs.ros", "/home/ega/lifecycle_msgs.ros"]
+    ros2_path: ["/home/ega/velocity_smoother.ros2",] # "/home/ega/talker.ros2"]
+    rossystem_path: "/home/ega/rebetmirte.rossystem"
+    variability_path: "/home/ega/dummy.var"

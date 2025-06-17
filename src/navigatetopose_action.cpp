@@ -4,6 +4,7 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "behaviortree_ros2/plugins.hpp"
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 using NavigateToPose = nav2_msgs::action::NavigateToPose;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
@@ -78,6 +79,7 @@ public:
     PortsList base_ports = RosActionNode::providedPorts();
     PortsList child_ports = {
       InputPort<Pose>(POSE),
+      InputPort<std::string>("planner"),
     };
     child_ports.merge(base_ports);
     return child_ports;
@@ -96,15 +98,20 @@ public:
     ss << "setGoal in pose";
 
     goal.behavior_tree = "";
-
+    std::string planner;
     getInput(POSE, pose_to_navigate_to);
+    getInput("planner", planner);
 
+    std::string bt_name = ament_index_cpp::get_package_share_directory("rebet_mirte") + "/trees/nav2/" + planner;
     PoseStamped stamped_pose;
     stamped_pose.header.frame_id = "map";
+
+    RCLCPP_INFO(logger(), "now() before assignment: %.9f", now().seconds());
     stamped_pose.header.stamp = now();
     stamped_pose.pose = pose_to_navigate_to;
 
     goal.pose = stamped_pose;
+    goal.behavior_tree = bt_name;
 
     RCLCPP_INFO(logger(), ss.str().c_str());
 
