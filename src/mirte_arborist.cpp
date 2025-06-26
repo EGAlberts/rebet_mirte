@@ -2,11 +2,16 @@
 
 #include "rebet/arborist.hpp"
 #include "rebet/json_serialization.hpp"
-
+#include "rebet_school/quality_requirements.hpp"
+#include "rebet_school/adapt_navtopose.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "behaviortree_cpp/json_export.h"
 #include "nav_msgs/msg/odometry.hpp"
 #include <nlohmann/json.hpp>
+#include <behaviortree_cpp/loggers/bt_cout_logger.h>
+#include "behaviortree_cpp/loggers/groot2_publisher.h"
+#include "behaviortree_cpp/xml_parsing.h"
+
 
 
 class MirteArborist : public Arborist
@@ -21,15 +26,33 @@ public:
   MirteArborist(const rclcpp::NodeOptions & options)
   : Arborist(options) {}
 
+  void onTreeCreated(BT::Tree& tree) override
+  {
+    logger_cout_ = std::make_shared<BT::StdCoutLogger>(tree);
+    const unsigned port = 1667;
+    BT::Groot2Publisher publisher(tree, port);
+
+    
+  }
+
   void registerNodesIntoFactory(BT::BehaviorTreeFactory & factory) override
   {
     //I suppose here you register all the possible custom nodes, and the determination as to whether they are actually used lies in the xml tree provided.
     factory.registerNodeType<AdaptOnConditionAny>("AdaptOnConditionAny");
+    factory.registerNodeType<NoObjectsNearbyQR>("NoObjectsNearby");
+    factory.registerNodeType<CPULimitQR>("CPULimit");
+    factory.registerNodeType<SimpleAdaptMaxVelocity>("AdaptMaxVelocity");
+    factory.registerNodeType<InTheWayQR>("InTheWay");
+    factory.registerNodeType<AdaptPlanner>("AdaptPlanner");
+
+    const std::string xml_models = BT::writeTreeNodesModelXML(factory);
+
+    std::cout << "Registered nodes into factory: " << xml_models << std::endl;
   }
 
   std::optional<BT::NodeStatus> onLoopAfterTick(BT::NodeStatus status) override
   {
-    _publish_feedback = false;
+    _publish_feedback = true;
 
     auto curr_time_pointer = std::chrono::system_clock::now();
 
@@ -38,11 +61,11 @@ public:
       curr_time_pointer.time_since_epoch()).count();
     int elapsed_seconds = current_time - time_since_last;
     // Every second I record an entry
-    if (elapsed_seconds >= 1) {
-      RCLCPP_INFO(
-        node()->get_logger(), "%d seconds have passed, current_status %s", total_elapsed,
-        toStr(status).c_str());
-    }
+    // if (elapsed_seconds >= 1) {
+    //   RCLCPP_INFO(
+    //     node()->get_logger(), "%d seconds have passed, current_status %s", total_elapsed,
+    //     toStr(status).c_str());
+    // }
 
 
     if (total_elapsed >= time_limit) {
@@ -54,6 +77,7 @@ public:
 
   std::optional<std::string> onLoopFeedback() override
   {
+    // std::cout << ExportBlackboardToJSON(*globalBlackboard()).dump() << std::endl;
     if (_publish_feedback) {return ExportBlackboardToJSON(*globalBlackboard()).dump();}
     return std::nullopt;
   }
@@ -68,6 +92,9 @@ public:
     }
     return "Ended Poorly";
   }
+
+  private:
+    std::shared_ptr<BT::StdCoutLogger> logger_cout_;
 };
 
 

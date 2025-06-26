@@ -68,9 +68,11 @@ public:
     const RosNodeParams & params)
   : RosActionNode<NavigateToPose>(name, conf, params)
   {
-    std::cout << "Someone made me (an NavigateToPoseAction Action Nodee)" << std::endl;
-
-    // RCLCPP_INFO(logger(), node_->get_name());
+    RCLCPP_INFO(logger(), "NavigateToPoseAction constructor called");
+    if(auto node = node_.lock())
+    {
+      node->declare_parameter("planner", "navfn_navigate_to_pose.xml");
+    }
 
   }
 
@@ -79,7 +81,6 @@ public:
     PortsList base_ports = RosActionNode::providedPorts();
     PortsList child_ports = {
       InputPort<Pose>(POSE),
-      InputPort<std::string>("planner"),
     };
     child_ports.merge(base_ports);
     return child_ports;
@@ -87,9 +88,6 @@ public:
 
   bool setGoal(RosActionNode::Goal & goal) override
   {
-    RCLCPP_INFO(logger(), "rego");
-    RCLCPP_INFO(logger(), registrationName().c_str());
-    setOutput("name_of_task", registrationName());
     // #goal definition
     // geometry_msgs/PoseStamped pose
     // string behavior_tree
@@ -98,23 +96,27 @@ public:
     ss << "setGoal in pose";
 
     goal.behavior_tree = "";
+    
     std::string planner;
+    
+    if(auto node = node_.lock())
+    {
+      planner = node->get_parameter("planner").as_string();
+    }
     getInput(POSE, pose_to_navigate_to);
-    getInput("planner", planner);
+    // getInput("planner", planner);
 
-    std::string bt_name = ament_index_cpp::get_package_share_directory("rebet_mirte") + "/trees/nav2/" + planner;
+    std::string bt_name = ament_index_cpp::get_package_share_directory("rebet_school") + "/trees/nav2/" + planner;
     PoseStamped stamped_pose;
     stamped_pose.header.frame_id = "map";
-
-    RCLCPP_INFO(logger(), "now() before assignment: %.9f", now().seconds());
     stamped_pose.header.stamp = now();
     stamped_pose.pose = pose_to_navigate_to;
 
     goal.pose = stamped_pose;
     goal.behavior_tree = bt_name;
 
-    RCLCPP_INFO(logger(), ss.str().c_str());
-
+    // RCLCPP_INFO(logger(), ss.str().c_str());
+    
     return true;
   }
 
@@ -137,8 +139,7 @@ public:
 
   virtual NodeStatus onFailure(ActionNodeErrorCode error) override
   {
-    RCLCPP_INFO(logger(), "Here we are");
-    RCLCPP_ERROR(logger(), "Navigate to Pose Error: %d", error);
+    // RCLCPP_ERROR(logger(), "Navigate to Pose Error: %d", error);
     return NodeStatus::FAILURE;
   }
 

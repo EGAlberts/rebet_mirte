@@ -1,7 +1,0 @@
-name rebetmc;
-import "./rebetmirte.rossystem";
-ros_system nav2;
-resolutions 
-LOW_SPEED : SetParameter(velocity_smoother,max_velocity,[0.10,0.0,1.0]) 
-MED_SPEED : SetParameter(velocity_smoother,max_velocity,[0.18,0.0,1.0])
-HI_SPEED : SetParameter(velocity_smoother,max_velocity,[0.26,0.0,1.0])

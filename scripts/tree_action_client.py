@@ -8,6 +8,8 @@ from btcpp_ros2_interfaces.msg import NodeStatus
 import pandas as pd
 import json
 import time
+from rclpy.clock import Clock
+
 
 got_response = False
 
@@ -21,6 +23,8 @@ class TreeActionClient(Node):
         self.declare_parameter("autostart", False)
 
         self.results = pd.DataFrame()
+        self.clock = Clock()
+
 
     def send_goal(self, tree_name):
         if self.get_parameter("autostart").value or not input("Press enter to start"):
@@ -71,6 +75,9 @@ class TreeActionClient(Node):
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
         blackboard_json = json.loads(feedback.message)
+
+        self.get_logger().info(feedback.message, throttle_duration_sec=5,
+                               throttle_time_source_type=self.clock)
 
         self.results = pd.concat([self.results, pd.DataFrame([blackboard_json])])
 

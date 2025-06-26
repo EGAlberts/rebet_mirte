@@ -7,17 +7,17 @@ from launch.substitutions import EnvironmentVariable
 
 def generate_launch_description():
     config_file = os.path.join(
-        get_package_share_directory('rebet_mirte'),
+        get_package_share_directory('rebet_school'),
         'config',
         'mirte_config.yaml'
     )
 
     return LaunchDescription([
         Node(
-            package='rebet_mirte',
+            package='rebet_school',
             executable='mirte_arborist',
             name='mirte_arborist_node',
-            prefix=EnvironmentVariable('REBET_TERMINAL_PREFIX'),
+            prefix='xterm -hold -e ',
             output='screen',
             parameters=[config_file, {}]
         ),

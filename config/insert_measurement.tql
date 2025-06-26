@@ -1,6 +1,0 @@
-match
-    $t_measured_nearest_object isa Term, has term_name "t_measured_nearest_object";
-
-insert
-    $t_measured_nearest_object has term_value 0.09;
-

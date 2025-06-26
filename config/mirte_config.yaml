@@ -2,9 +2,9 @@
   ros__parameters:
     action_name: "behavior_server" # Optional (defaults to `bt_action_server`)
     behavior_trees:
-      - rebet_mirte/trees
+      - rebet_school/trees
     plugins:
-      - rebet_mirte/bt_plugins
+      - rebet_school/bt_plugins
     use_sim_time: true
  
 

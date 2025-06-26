@@ -7,56 +7,25 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from collections import deque
-import queue
-import threading
 from nav_msgs.msg import Odometry
-from diagnostic_msgs.msg import DiagnosticArray
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import LaserScan, Range, BatteryState
+from diagnostic_msgs.msg import KeyValue, DiagnosticArray
 from std_msgs.msg import Float32
-
-# Essentially this is a client to the setBlackboard service
-# with some logic around  it to incorporate different
-# published data about the system.
+from rclpy.clock import Clock
 
 
 class SystemReflection(Node):
 
     def __init__(self):
-        print("Initializing the node...")
-        # self.node_name = 'system_reflection'
-
-        # This node contains subscriptions to more than just FROG data,
-        # which is no longer how it is meant to be.
 
         super().__init__("system_reflection")
-
-        timer_cb_group = MutuallyExclusiveCallbackGroup()
-        exclusive_group = MutuallyExclusiveCallbackGroup()
-        sub_group = MutuallyExclusiveCallbackGroup()
-        self.counter = 0
-        self.diag_counter = 0
 
         self.cli = self.create_client(
             SetAttributesInBlackboard,
             "/set_attributes_in_blackboard",
-            callback_group=exclusive_group,
-        )
-        self.subscription = self.create_subscription(
-            BatteryState,
-            "/battery/status",
-            self.battery_state_cb,
-            10,
-            callback_group=sub_group,
-        )
-
-        self.diagnostic_subscription = self.create_subscription(
-            DiagnosticArray,
-            "/diagnostics",
-            self.sv_diag_cb,
-            1,
             callback_group=MutuallyExclusiveCallbackGroup(),
         )
+
         self.laserscan_subscription = self.create_subscription(
             LaserScan,
             "/scan",
@@ -64,181 +33,139 @@ class SystemReflection(Node):
             1,
             callback_group=MutuallyExclusiveCallbackGroup(),
         )
-        self.odometry_subscription = self.create_subscription(
-            Odometry,
-            "/odom",
-            self.tb_odom_cb,
-            10,
-            callback_group=MutuallyExclusiveCallbackGroup(),
-        )
 
-        self.lighting_subscription = self.create_subscription(
-            Float32,
-            "/current_lighting",
-            self.current_lighting_cb,
-            10,
-            callback_group=MutuallyExclusiveCallbackGroup(),
-        )
-
-        self.pipeline_distance_inspected_sub = self.create_subscription(
-            Float32,
-            "pipeline/distance_inspected",
-            self.distance_inspected_cb,
+        self.rear_left_range_subscription = self.create_subscription(
+            Range,
+            "/io/distance/rear_left",
+            self.rear_left_range_cb,
             1,
             callback_group=MutuallyExclusiveCallbackGroup(),
         )
 
-        self.distance_inspected_msg = None
-        self.req = SetAttributesInBlackboard.Request()
-        self.odom_msg = None
-        self.laser_msg = None
-        self.current_lighting_msg = None
-        self.diagnostic_values = queue.Queue()  # queue of diagnostic KeyValue
-        self.time_monitor_timer = self.create_timer(
-            2, self.do_stuff, callback_group=timer_cb_group
+        self.rear_left_range_subscription = self.create_subscription(
+            Range,
+            "/io/distance/rear_right",
+            self.rear_right_range_cb,
+            1,
+            callback_group=MutuallyExclusiveCallbackGroup(),
         )
-        self.battery_state = None
-        self.state_queue = deque(
-            maxlen=20
-        )  # just picked a random length, can be adjusted..
-        self.diag_queue_lock = threading.Lock()
+        self.battery_state_subscription = self.create_subscription(
+            BatteryState,
+            "/io/power/power_watcher",
+            self.battery_state_cb,
+            1,
+            callback_group=MutuallyExclusiveCallbackGroup(),
+        )
+        self.battery_state_subscription = self.create_subscription(
+            BatteryState,
+            "/io/power/power_watcher",
+            self.battery_state_cb,
+            1,
+            callback_group=MutuallyExclusiveCallbackGroup(),
+        )
 
-    def send_request(self, script):
-        print("sending req")
-        with self.battery_state_lock:
-            while not self.cli.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info("service not available, waiting again...")
-            self.req.script_code = script
-            self.future = self.cli.call_async(self.req)
-            # while rclpy.spin_until_future_complete(self, self.future):
-            #     self.get_logger().info("Waiting for future to complete")
-            # return self.future.result()
+        self.diagnostic_subscription = self.create_subscription(
+            DiagnosticArray,
+            "/diagnostics",
+            self.diagnostics_cb,
+            1,
+            callback_group=MutuallyExclusiveCallbackGroup(),
+        )
+
+
+        self.req = SetAttributesInBlackboard.Request()
+
+        self.laser_msg = None
+        self.rear_left_range_msg = None
+        self.rear_right_range_msg = None
+        self.battery_state_msg = None
+        self.cpu_usage_msg = None
+
+        self.msg_timestamp = None
+
+        self.get_logger().info("System Reflection node created")
+
+        self.clock = Clock()
+
+        self.time_monitor_timer = self.create_timer(2, self.process_reflection,
+                                                    callback_group=MutuallyExclusiveCallbackGroup())
 
     def ls_scan_cb(self, msg):
         self.laser_msg = msg
-        self.counter += 1
-        if self.counter % 1000 == 0:
-            self.get_logger().info("1000th Laser Msg Received!!")
-        if self.counter > 200000:
-            self.counter = 0
-
-    def distance_inspected_cb(self, msg):
-        self.distance_inspected_msg = msg
-
-    def current_lighting_cb(self, msg):
-        self.current_lighting_msg = msg
-
-    def tb_odom_cb(self, msg):
-        self.odom_msg = msg
-        # self.linear_speed = np.hypot(msg.twist.twist.linear.x, msg.twist.twist.linear.y)
-        self.counter += 1
-        if self.counter % 1000 == 0:
-            self.get_logger().info("1000th Odom Msg Received!!")
-        if self.counter > 200000:
-            self.counter = 0
-
-    def sv_diag_cb(self, msg):
-        # self.linear_speed = np.hypot(msg.twist.twist.linear.x, msg.twist.twist.linear.y)
-        self.diag_counter += 1
-
-        if self.counter % 10000 == 0:
-            self.get_logger().info("10000th Diagnostics Msg Received!!")
-        if self.counter > 200000:
-            self.counter = 0
-
-        for diag_status in msg.status:
-            if (
-                diag_status.message == "QA status"
-                or diag_status.message == "Component status"
-            ):
-                for diag_value in diag_status.values:
-                    with self.diag_queue_lock:
-                        self.diagnostic_values.put_nowait(diag_value)
-
+        self.get_logger().info("Receiving LaserScans", throttle_duration_sec=20,
+                               throttle_time_source_type=self.clock)
+    
+    def rear_left_range_cb(self, msg):
+        self.rear_left_range_msg = msg
+        self.get_logger().info("Receiving RL Ranges", throttle_duration_sec=20,
+                               throttle_time_source_type=self.clock)
+        
+    def rear_right_range_cb(self, msg):
+        self.rear_right_range_msg = msg
+        self.get_logger().info("Receiving RR Ranges", throttle_duration_sec=20,
+                               throttle_time_source_type=self.clock)
+        
     def battery_state_cb(self, msg):
-        self.state_queue.append(msg)
+        self.battery_state_msg = msg
+        self.get_logger().info("Receiving BatteryStates", throttle_duration_sec=20,
+                               throttle_time_source_type=self.clock)
+    
+    def diagnostics_cb(self, msg):
+        self.get_logger().info("Receiving Diagnostics", throttle_duration_sec=20,
+                               throttle_time_source_type=self.clock)
+        for status in msg.status:
+            if 'cpu_monitor' in status.name:
+                for kv in status.values:
+                    if "Load Average (1min)" in kv.key:
+                        self.cpu_usage_msg = kv
+                        return
 
-    def do_stuff(self):
-        # print('lpp'+ str(i))
-        self.get_logger().info("Processing battery state and calling service client...")
+    def _append_sys_attribute(self, name, msg):
+        if msg is None:
+            return
 
-        # script = self.process_bt_state()
-        # print("\nscript is " + script + "\n\n")
-        # if(script != ""):
-        # self.req.script_code = script
-        # response = self.cli.call(self.req)
+        new_sys_att = SystemAttribute()
+        new_sys_att.name = name
+        if isinstance(msg, Odometry):
+            value_type = 1
+            value_field = "odom_value"
+        elif isinstance(msg, KeyValue):
+            value_type = 2
+            value_field = "diag_value"
+        elif isinstance(msg, LaserScan):
+            value_type = 3
+            value_field = "laser_value"
+        elif isinstance(msg, Float32):
+            value_type = 4
+            value_field = "float_value"
+        elif isinstance(msg, Range):
+            value_type = 5
+            value_field = "range_value"
+        elif isinstance(msg, BatteryState):
+            value_type = 6
+            value_field = "battery_value"
+        else:
+            # Add more types as needed
+            return
 
-        # self.get_logger().info('Result of it ' + str(response.success))
+        att_value = SystemAttributeValue()
+        att_value.header.stamp = self.msg_timestamp
+        att_value.type = value_type
+        setattr(att_value, value_field, msg)
+        new_sys_att.value = att_value
+        self.req.sys_attributes.append(new_sys_att)
 
-        # self.battery_state = None
+    def process_reflection(self):
+        self.get_logger().info("Processing reflections")
 
-        if self.odom_msg is not None:
-            new_sys_att = SystemAttribute()
-            new_sys_att.name = "odometry"
+        self.msg_timestamp = self.get_clock().now().to_msg()
 
-            att_value = SystemAttributeValue()
-            att_value.header.stamp = self.get_clock().now().to_msg()
-            att_value.type = 1  # odometry type
-            att_value.odom_value = self.odom_msg
-            new_sys_att.value = att_value
-            self.req.sys_attributes.append(new_sys_att)
+        self._append_sys_attribute("laser_scan", self.laser_msg)
+        self._append_sys_attribute("rear_left_range", self.rear_left_range_msg)
+        self._append_sys_attribute("rear_right_range", self.rear_right_range_msg)
+        self._append_sys_attribute("battery_state", self.battery_state_msg)
+        self._append_sys_attribute("cpu_usage", self.cpu_usage_msg)
 
-            self.odom_msg = None
-
-        if self.laser_msg is not None:
-            new_sys_att = SystemAttribute()
-            new_sys_att.name = "laser_scan"
-
-            att_value = SystemAttributeValue()
-            att_value.header.stamp = self.get_clock().now().to_msg()
-            att_value.type = 3  # laserscan type
-            att_value.laser_value = self.laser_msg
-            new_sys_att.value = att_value
-            self.req.sys_attributes.append(new_sys_att)
-
-            self.laser_msg = None
-
-        if self.distance_inspected_msg is not None:
-            new_sys_att = SystemAttribute()
-            new_sys_att.name = "distance_inspected"
-
-            att_value = SystemAttributeValue()
-            att_value.header.stamp = self.get_clock().now().to_msg()
-            att_value.type = 4  # float type
-            att_value.float_value = self.distance_inspected_msg
-            new_sys_att.value = att_value
-            self.req.sys_attributes.append(new_sys_att)
-
-            self.distance_inspected_msg = None
-
-        if self.current_lighting_msg is not None:
-            new_sys_att = SystemAttribute()
-            new_sys_att.name = "current_lighting"
-
-            att_value = SystemAttributeValue()
-            att_value.header.stamp = self.get_clock().now().to_msg()
-            att_value.type = 4  # float type
-            att_value.float_value = self.current_lighting_msg
-            new_sys_att.value = att_value
-            self.req.sys_attributes.append(new_sys_att)
-
-            self.current_lighting_msg = None
-
-            # response = self.cli.call(self.req)
-
-        with self.diag_queue_lock:
-            while not self.diagnostic_values.empty():
-                diag_keyvalue = self.diagnostic_values.get_nowait()
-                new_sys_att = SystemAttribute()
-
-                new_sys_att.name = diag_keyvalue.key
-
-                att_value = SystemAttributeValue()
-                att_value.header.stamp = self.get_clock().now().to_msg()
-                att_value.type = 2  # diagnositc keyvalue type
-                att_value.diag_value = diag_keyvalue
-                new_sys_att.value = att_value
-                self.req.sys_attributes.append(new_sys_att)
 
         if len(self.req.sys_attributes) > 0:
             self.get_logger().info("Trying to call set att...")
@@ -250,52 +177,10 @@ class SystemReflection(Node):
                 "Result of call to set attribute in blackboard " + str(response.success)
             )
             self.req.sys_attributes = []
-
-        self.get_logger().info("Finish sys reflec calls...")
-
-    def script_string(self, field, value):
-        assignment_string = ""
-        assignment_string += field
-        assignment_string += ":="
-        if isinstance(value, str):
-            assignment_string += "'" + value + "'"
         else:
-            assignment_string += str(value)
-            assignment_string += "; "
-        return assignment_string
-
-    def process_bt_state(self):
-        # float32 voltage          # Voltage in Volts (Mandatory)
-        # float32 temperature      # Temperature in Degrees Celsius (If unmeasured NaN)
-        # float32 current          # Negative when discharging (A)  (If unmeasured NaN)
-        # float32 charge           # Current charge in Ah  (If unmeasured NaN)
-        # float32 capacity         # Capacity in Ah (last full capacity)  (If unmeasured NaN)
-        # float32 design_capacity  # Capacity in Ah (design capacity)  (If unmeasured NaN)
-        # float32 percentage       # Charge percentage on 0 to 1 range  (If unmeasured NaN)
-
-        # float32 linear_speed
-        try:
-            bt_state = self.state_queue[-1]
-            assignment_string = ""
-            fields = [
-                "voltage",
-                "temperature",
-                "current",
-                "charge",
-                "capacity",
-                "design_capacity",
-                "percentage",
-            ]  # paramterize?
-            for field in fields:
-                assignment_string += self.script_string(field, getattr(bt_state, field))
-
-            # assignment_string+= self.script_string("linear_speed", self.linear_speed)
-            assignment_string = assignment_string[:-2]
-            return assignment_string
-        except IndexError:
-            # nothing in the queue (yet?)
-            return ""
-
+            self.get_logger().info("No attributes to set in blackboard")
+            
+        self.get_logger().info("Finished trying to set attributes in blackboard")
 
 def main():
     rclpy.init()
