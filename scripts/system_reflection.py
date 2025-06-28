@@ -34,45 +34,6 @@ class SystemReflection(Node):
             callback_group=MutuallyExclusiveCallbackGroup(),
         )
 
-        self.rear_left_range_subscription = self.create_subscription(
-            Range,
-            "/io/distance/rear_left",
-            self.rear_left_range_cb,
-            1,
-            callback_group=MutuallyExclusiveCallbackGroup(),
-        )
-
-        self.rear_left_range_subscription = self.create_subscription(
-            Range,
-            "/io/distance/rear_right",
-            self.rear_right_range_cb,
-            1,
-            callback_group=MutuallyExclusiveCallbackGroup(),
-        )
-        self.battery_state_subscription = self.create_subscription(
-            BatteryState,
-            "/io/power/power_watcher",
-            self.battery_state_cb,
-            1,
-            callback_group=MutuallyExclusiveCallbackGroup(),
-        )
-        self.battery_state_subscription = self.create_subscription(
-            BatteryState,
-            "/io/power/power_watcher",
-            self.battery_state_cb,
-            1,
-            callback_group=MutuallyExclusiveCallbackGroup(),
-        )
-
-        self.diagnostic_subscription = self.create_subscription(
-            DiagnosticArray,
-            "/diagnostics",
-            self.diagnostics_cb,
-            1,
-            callback_group=MutuallyExclusiveCallbackGroup(),
-        )
-
-
         self.req = SetAttributesInBlackboard.Request()
 
         self.laser_msg = None

@@ -37,7 +37,7 @@ def generate_launch_description():
             output='screen',
             parameters=[config_file, {
                 'log_blackboard': True,
-                'factory_xml': True,
+                'factory_xml': False,
             }]
         ),
         Node(

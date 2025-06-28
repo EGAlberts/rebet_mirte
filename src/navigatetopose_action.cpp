@@ -106,7 +106,7 @@ public:
     getInput(POSE, pose_to_navigate_to);
     // getInput("planner", planner);
 
-    std::string bt_name = ament_index_cpp::get_package_share_directory("rebet_school") + "/trees/nav2/" + planner;
+    std::string bt_name = ament_index_cpp::get_package_share_directory("mirte_navigation") + "/trees/" + planner;
     PoseStamped stamped_pose;
     stamped_pose.header.frame_id = "map";
     stamped_pose.header.stamp = now();

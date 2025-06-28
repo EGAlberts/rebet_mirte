@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="AdapQRs">
+  <BehaviorTree ID="AdapQRs">
+    <NoObjectsNearby weight=""
+                     metric="{@safe_metric}"
+                     mean_metric=""
+                     out_status="{@nearby_status}"
+                     nearbyPercentage="0.30"
+                     laserScan="{@laser_scan}">
+      <CPULimit metric="{@cpu_metric}"
+                mean_metric=""
+                out_status="{@cpu_status}"
+                cpuPercentage="&lt;REPLACE&gt;"
+                weight=""
+                batteryState="{@&lt;REPLACE&gt;}"
+                cpuMessage="{@&lt;REPLACE&gt;}">
+        <InTheWay weight=""
+                  metric="{@intheway_metric}"
+                  out_status="{@intheway_status}"
+                  mean_metric=""
+                  rightRearRange="{@&lt;REPLACE&gt;}"
+                  leftRearRange="{@&lt;REPLACE&gt;}">
+          <AdaptPlanner parameter_name="planner"
+                        adaptation_strategy="ignoreMe"
+                        adaptation_period=""
+                        ros_node_name="mirte_arborist_node"
+                        adaptation_options="ignoreMe"
+                        in_cpu_limit_qr="">
+            <ComplexAdaptMaxVelocity parameter_name="max_velocity"
+                                     ros_node_name="velocity_smoother"
+                                     adaptation_options="ignoreMe"
+                                     in_proximity=""
+                                     in_intheway_qr=""
+                                     adaptation_strategy="ignoreMe"
+                                     adaptation_period=""
+                                     in_nearby_qr="">
+              <SimpleAdaptMaxVelocity parameter_name="max_velocity"
+                                      ros_node_name="velocity_smoother"
+                                      adaptation_options="ignoreMe"
+                                      adaptation_strategy="ignoreMe"
+                                      adaptation_period=""
+                                      in_nearby_qr="">
+                <NavigateToPose action_name=""
+                                pose=""/>
+              </SimpleAdaptMaxVelocity>
+            </ComplexAdaptMaxVelocity>
+          </AdaptPlanner>
+        </InTheWay>
+      </CPULimit>
+    </NoObjectsNearby>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Decorator ID="AdaptPlanner">
+      <input_port name="parameter_name"
+                  type="std::string">The name of the thing you adapt</input_port>
+      <input_port name="adaptation_strategy"
+                  type="std::string">Which strategy should be employed to decide on adaptations</input_port>
+      <input_port name="adaptation_period"
+                  type="int">The periodicity with which the adaptation should occur during running.</input_port>
+      <input_port name="ros_node_name"
+                  type="std::string">Where the thing you adapt is located</input_port>
+      <input_port name="adaptation_options"
+                  type="std::vector&lt;double, std::allocator&lt;double&gt; &gt;">List of things to adapt with</input_port>
+      <input_port name="in_cpu_limit_qr"
+                  type="std::string">status of CPU QR, whether violated or not</input_port>
+    </Decorator>
+    <Decorator ID="CPULimit">
+      <output_port name="metric"
+                   type="double">To what extent is this property fulfilled</output_port>
+      <output_port name="mean_metric"
+                   type="double">To what extent is this property fulfilled on average</output_port>
+      <output_port name="out_status"
+                   type="std::string">Information as to the state the QR is currently in.</output_port>
+      <input_port name="cpuPercentage"
+                  type="float">The load limit</input_port>
+      <input_port name="weight"
+                  type="double">How much influence this QR should have in the calculation of system utility</input_port>
+      <input_port name="batteryState"
+                  type="sensor_msgs::msg::BatteryState_&lt;std::allocator&lt;void&gt; &gt;">A BatteryState message which gives the current battery level and power details of the robot</input_port>
+      <input_port name="cpuMessage"
+                  type="diagnostic_msgs::msg::KeyValue_&lt;std::allocator&lt;void&gt; &gt;">A key value pair which gives the average CPU load over the past minute</input_port>
+    </Decorator>
+    <Decorator ID="ComplexAdaptMaxVelocity">
+      <input_port name="parameter_name"
+                  type="std::string">The name of the thing you adapt</input_port>
+      <input_port name="ros_node_name"
+                  type="std::string">Where the thing you adapt is located</input_port>
+      <input_port name="adaptation_options"
+                  type="std::vector&lt;double, std::allocator&lt;double&gt; &gt;">List of things to adapt with</input_port>
+      <input_port name="in_proximity"
+                  type="double">how close as a percentage of the lidar range is the nearest object</input_port>
+      <input_port name="in_intheway_qr"
+                  type="std::string">status of in the way QR, whether violated or not</input_port>
+      <input_port name="adaptation_strategy"
+                  type="std::string">Which strategy should be employed to decide on adaptations</input_port>
+      <input_port name="adaptation_period"
+                  type="int">The periodicity with which the adaptation should occur during running.</input_port>
+      <input_port name="in_nearby_qr"
+                  type="std::string">status of nearby QR, whether violated or not</input_port>
+    </Decorator>
+    <Decorator ID="InTheWay">
+      <input_port name="weight"
+                  type="double">How much influence this QR should have in the calculation of system utility</input_port>
+      <output_port name="metric"
+                   type="double">To what extent is this property fulfilled</output_port>
+      <output_port name="out_status"
+                   type="std::string">Information as to the state the QR is currently in.</output_port>
+      <output_port name="mean_metric"
+                   type="double">To what extent is this property fulfilled on average</output_port>
+      <input_port name="rightRearRange"
+                  type="sensor_msgs::msg::Range_&lt;std::allocator&lt;void&gt; &gt;">The LaserScan message origination from the robot's LIDAR</input_port>
+      <input_port name="leftRearRange"
+                  type="sensor_msgs::msg::Range_&lt;std::allocator&lt;void&gt; &gt;">The LaserScan message origination from the robot's LIDAR</input_port>
+    </Decorator>
+    <Action ID="NavigateToPose">
+      <input_port name="action_name"
+                  type="std::string">Action server name</input_port>
+      <input_port name="pose"
+                  type="geometry_msgs::msg::Pose_&lt;std::allocator&lt;void&gt; &gt;"/>
+    </Action>
+    <Decorator ID="NoObjectsNearby">
+      <input_port name="weight"
+                  type="double">How much influence this QR should have in the calculation of system utility</input_port>
+      <output_port name="metric"
+                   type="double">To what extent is this property fulfilled</output_port>
+      <output_port name="mean_metric"
+                   type="double">To what extent is this property fulfilled on average</output_port>
+      <output_port name="out_status"
+                   type="std::string">Information as to the state the QR is currently in.</output_port>
+      <input_port name="nearbyPercentage"
+                  type="float">How close is too close for the requirement</input_port>
+      <input_port name="laserScan"
+                  type="sensor_msgs::msg::LaserScan_&lt;std::allocator&lt;void&gt; &gt;">The LaserScan message origination from the robot's LIDAR</input_port>
+    </Decorator>
+    <Decorator ID="SimpleAdaptMaxVelocity">
+      <input_port name="parameter_name"
+                  type="std::string">The name of the thing you adapt</input_port>
+      <input_port name="ros_node_name"
+                  type="std::string">Where the thing you adapt is located</input_port>
+      <input_port name="adaptation_options"
+                  type="std::vector&lt;double, std::allocator&lt;double&gt; &gt;">List of things to adapt with</input_port>
+      <input_port name="adaptation_strategy"
+                  type="std::string">Which strategy should be employed to decide on adaptations</input_port>
+      <input_port name="adaptation_period"
+                  type="int">The periodicity with which the adaptation should occur during running.</input_port>
+      <input_port name="in_nearby_qr"
+                  type="std::string">status of nearby QR, whether violated or not</input_port>
+    </Decorator>
+  </TreeNodesModel>
+
+</root>

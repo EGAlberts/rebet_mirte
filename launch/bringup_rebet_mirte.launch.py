@@ -30,6 +30,7 @@ def generate_launch_description():
         executable='adaptation_layer',
         prefix='xterm -hold -e',
         name='adaptation_layer_node',
+        condition=LaunchConfigurationEquals('exercise', 'execution'),
     )
 
     system_reflection = Node(
