@@ -64,7 +64,6 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/system_reflection.py
   scripts/tree_action_client.py
-  scripts/context_model.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
