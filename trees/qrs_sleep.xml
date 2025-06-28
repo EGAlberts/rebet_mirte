@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="test">
+  <BehaviorTree ID="QRSleep60">
+    <NoObjectsNearby weight=""
+                     metric="{@safe_metric}"
+                     mean_metric="aaa"
+                     out_status="{@nearby_status}"
+                     nearbyPercentage="0.30"
+                     laserScan="{@laser_scan}">
+      <CPULimit metric="{@cpu_metric}"
+                mean_metric=""
+                out_status="{@cpu_status}"
+                cpuPercentage="&lt;REPLACE&gt;"
+                weight=""
+                batteryState="{@&lt;REPLACE&gt;}"
+                cpuMessage="{@&lt;REPLACE&gt;}">
+        <InTheWay weight=""
+                  metric="{@intheway_metric}"
+                  out_status="{@intheway_status}"
+                  mean_metric=""
+                  rightRearRange="{@&lt;REPLACE&gt;}"
+                  leftRearRange="{@&lt;REPLACE&gt;}">
+          <Sleep msec="60000"/>
+        </InTheWay>
+      </CPULimit>
+    </NoObjectsNearby>
+  </BehaviorTree>
+
+  <BehaviorTree ID="test">
+    <AlwaysSuccess/>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Decorator ID="CPULimit">
+      <output_port name="metric"
+                   type="double">To what extent is this property fulfilled</output_port>
+      <output_port name="mean_metric"
+                   type="double">To what extent is this property fulfilled on average</output_port>
+      <output_port name="out_status"
+                   type="std::string">Information as to the state the QR is currently in.</output_port>
+      <input_port name="cpuPercentage"
+                  type="float">The load limit</input_port>
+      <input_port name="weight"
+                  type="double">How much influence this QR should have in the calculation of system utility</input_port>
+      <input_port name="batteryState"
+                  type="sensor_msgs::msg::BatteryState_&lt;std::allocator&lt;void&gt; &gt;">A BatteryState message which gives the current battery level and power details of the robot</input_port>
+      <input_port name="cpuMessage"
+                  type="diagnostic_msgs::msg::KeyValue_&lt;std::allocator&lt;void&gt; &gt;">A key value pair which gives the average CPU load over the past minute</input_port>
+    </Decorator>
+    <Decorator ID="InTheWay">
+      <input_port name="weight"
+                  type="double">How much influence this QR should have in the calculation of system utility</input_port>
+      <output_port name="metric"
+                   type="double">To what extent is this property fulfilled</output_port>
+      <output_port name="out_status"
+                   type="std::string">Information as to the state the QR is currently in.</output_port>
+      <output_port name="mean_metric"
+                   type="double">To what extent is this property fulfilled on average</output_port>
+      <input_port name="rightRearRange"
+                  type="sensor_msgs::msg::Range_&lt;std::allocator&lt;void&gt; &gt;">The LaserScan message origination from the robot's LIDAR</input_port>
+      <input_port name="leftRearRange"
+                  type="sensor_msgs::msg::Range_&lt;std::allocator&lt;void&gt; &gt;">The LaserScan message origination from the robot's LIDAR</input_port>
+    </Decorator>
+    <Decorator ID="NoObjectsNearby">
+      <input_port name="weight"
+                  type="double">How much influence this QR should have in the calculation of system utility</input_port>
+      <output_port name="metric"
+                   type="double">To what extent is this property fulfilled</output_port>
+      <output_port name="mean_metric"
+                   type="double">To what extent is this property fulfilled on average</output_port>
+      <output_port name="out_status"
+                   type="std::string">Information as to the state the QR is currently in.</output_port>
+      <input_port name="nearbyPercentage"
+                  type="float">How close is too close for the requirement</input_port>
+      <input_port name="laserScan"
+                  type="sensor_msgs::msg::LaserScan_&lt;std::allocator&lt;void&gt; &gt;">The LaserScan message origination from the robot's LIDAR</input_port>
+    </Decorator>
+  </TreeNodesModel>
+
+</root>

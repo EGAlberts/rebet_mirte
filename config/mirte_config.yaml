@@ -5,7 +5,7 @@
       - rebet_school/trees
     plugins:
       - rebet_school/bt_plugins
-    use_sim_time: true
+    use_sim_time: false
  
 
 

@@ -76,10 +76,6 @@ class SystemReflection(Node):
         self.req = SetAttributesInBlackboard.Request()
 
         self.laser_msg = None
-        self.rear_left_range_msg = None
-        self.rear_right_range_msg = None
-        self.battery_state_msg = None
-        self.cpu_usage_msg = None
 
         self.msg_timestamp = None
 
@@ -94,31 +90,7 @@ class SystemReflection(Node):
         self.laser_msg = msg
         self.get_logger().info("Receiving LaserScans", throttle_duration_sec=20,
                                throttle_time_source_type=self.clock)
-    
-    def rear_left_range_cb(self, msg):
-        self.rear_left_range_msg = msg
-        self.get_logger().info("Receiving RL Ranges", throttle_duration_sec=20,
-                               throttle_time_source_type=self.clock)
-        
-    def rear_right_range_cb(self, msg):
-        self.rear_right_range_msg = msg
-        self.get_logger().info("Receiving RR Ranges", throttle_duration_sec=20,
-                               throttle_time_source_type=self.clock)
-        
-    def battery_state_cb(self, msg):
-        self.battery_state_msg = msg
-        self.get_logger().info("Receiving BatteryStates", throttle_duration_sec=20,
-                               throttle_time_source_type=self.clock)
-    
-    def diagnostics_cb(self, msg):
-        self.get_logger().info("Receiving Diagnostics", throttle_duration_sec=20,
-                               throttle_time_source_type=self.clock)
-        for status in msg.status:
-            if 'cpu_monitor' in status.name:
-                for kv in status.values:
-                    if "Load Average (1min)" in kv.key:
-                        self.cpu_usage_msg = kv
-                        return
+
 
     def _append_sys_attribute(self, name, msg):
         if msg is None:
@@ -161,11 +133,6 @@ class SystemReflection(Node):
         self.msg_timestamp = self.get_clock().now().to_msg()
 
         self._append_sys_attribute("laser_scan", self.laser_msg)
-        self._append_sys_attribute("rear_left_range", self.rear_left_range_msg)
-        self._append_sys_attribute("rear_right_range", self.rear_right_range_msg)
-        self._append_sys_attribute("battery_state", self.battery_state_msg)
-        self._append_sys_attribute("cpu_usage", self.cpu_usage_msg)
-
 
         if len(self.req.sys_attributes) > 0:
             self.get_logger().info("Trying to call set att...")
@@ -179,7 +146,7 @@ class SystemReflection(Node):
             self.req.sys_attributes = []
         else:
             self.get_logger().info("No attributes to set in blackboard")
-            
+
         self.get_logger().info("Finished trying to set attributes in blackboard")
 
 def main():

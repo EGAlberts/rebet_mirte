@@ -92,7 +92,7 @@ class AdaptNavToPose : public AdaptPeriodicallyOnRunning<double>
       return true;
     }
 
-    bool decrease_velocity()
+    bool decrease_max_velocity()
     {
       _internal_adaptations = {};
 
@@ -108,7 +108,7 @@ class AdaptNavToPose : public AdaptPeriodicallyOnRunning<double>
       return true;
     }
 
-    bool increase_velocity()
+    bool increase_max_velocity()
     {
       _internal_adaptations = {};
 

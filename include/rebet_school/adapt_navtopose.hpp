@@ -46,11 +46,11 @@ class SimpleAdaptMaxVelocity : public AdaptNavToPose
         
         if(nearby_status == "VIOLATED"){
             // This returns true if it is possible to lower the max velocity.
-            return decrease_velocity();
+            return decrease_max_velocity();
         }
        
         // If the nearby QRs status is not violated, we can increase the velocity.
-        return increase_velocity();
+        return increase_max_velocity();
     }
 
     static constexpr const char* NEARBY_IN = "in_nearby_qr";
@@ -135,6 +135,7 @@ class AdaptPlanner : public AdaptNavToPose
         //return change_path_planner(PathPlanner::NavFn);
 
         //SMAC uses more CPU than NavFn.
+        return false;
     }
 
     static constexpr const char* CPU_IN = "in_cpu_limit_qr";

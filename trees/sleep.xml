@@ -1,0 +1,6 @@
+
+<root BTCPP_format="4" main_tree_to_execute="Sleep">
+  	<BehaviorTree ID="Sleep60">
+		<Sleep msec="60000"/>
+  </BehaviorTree>
+</root>

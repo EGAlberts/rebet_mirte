@@ -153,6 +153,7 @@ class CPULimitQR : public TaskLevelQR
       PortsList child_ports =  {
               InputPort<KeyValue>(IN_CPU,"A key value pair which gives the average CPU load over the past minute"),
               InputPort<BatteryState>(IN_BATTERY,"A BatteryState message which gives the current battery level and power details of the robot"),
+              InputPort<float>(IN_THRESHOLD,"The load limit"),
       };
 
       child_ports.merge(base_ports);
@@ -170,6 +171,7 @@ class CPULimitQR : public TaskLevelQR
     private:
       static constexpr const char* IN_BATTERY = "batteryState";
       static constexpr const char* IN_CPU = "cpuMessage";
+      static constexpr const char* IN_THRESHOLD = "cpuPercentage";
       BT::Timestamp _last_timestamp;
 
       KeyValue cpu_msg;

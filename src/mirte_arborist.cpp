@@ -22,35 +22,37 @@ public:
   int total_elapsed = 0;
   int time_limit = 300;
   bool _publish_feedback = false;
+  rclcpp::Clock::SharedPtr clock_;
 
   MirteArborist(const rclcpp::NodeOptions & options)
-  : Arborist(options) {}
+  : Arborist(options) {
+    node()->declare_parameter("log_blackboard", false);
+    node()->declare_parameter("factory_xml", false);
+  }
 
   void onTreeCreated(BT::Tree& tree) override
   {
     logger_cout_ = std::make_shared<BT::StdCoutLogger>(tree);
-    const unsigned port = 1667;
-    BT::Groot2Publisher publisher(tree, port);
-
-    
+    clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
+    bool factory_xml = false;
+    node()->get_parameter("factory_xml", factory_xml);
+    if(factory_xml) {
+      const std::string xml_models = BT::writeTreeNodesModelXML(factory());
+      std::cout << "Registered nodes into factory: " << xml_models << std::endl;
+    }
   }
 
   void registerNodesIntoFactory(BT::BehaviorTreeFactory & factory) override
   {
-    //I suppose here you register all the possible custom nodes, and the determination as to whether they are actually used lies in the xml tree provided.
-    factory.registerNodeType<AdaptOnConditionAny>("AdaptOnConditionAny");
     factory.registerNodeType<NoObjectsNearbyQR>("NoObjectsNearby");
     factory.registerNodeType<CPULimitQR>("CPULimit");
-    factory.registerNodeType<SimpleAdaptMaxVelocity>("AdaptMaxVelocity");
+    factory.registerNodeType<SimpleAdaptMaxVelocity>("SimpleAdaptMaxVelocity");
+    factory.registerNodeType<ComplexAdaptMaxVelocity>("ComplexAdaptMaxVelocity");
     factory.registerNodeType<InTheWayQR>("InTheWay");
     factory.registerNodeType<AdaptPlanner>("AdaptPlanner");
-
-    const std::string xml_models = BT::writeTreeNodesModelXML(factory);
-
-    std::cout << "Registered nodes into factory: " << xml_models << std::endl;
   }
 
-  std::optional<BT::NodeStatus> onLoopAfterTick(BT::NodeStatus status) override
+  std::optional<BT::NodeStatus> onLoopAfterTick(BT::NodeStatus /*status*/) override
   {
     _publish_feedback = true;
 
@@ -77,6 +79,22 @@ public:
 
   std::optional<std::string> onLoopFeedback() override
   {
+    bool to_log = false;
+    node()->get_parameter("log_blackboard", to_log);
+
+    auto json_obj = ExportBlackboardToJSON(*globalBlackboard());
+    summarize_laserscan_json(json_obj);
+    auto pretty_json = json_obj.dump(2);
+
+    if (to_log) {
+      RCLCPP_INFO_THROTTLE(
+        node()->get_logger(),
+        *clock_,
+        5000,
+        "Blackboard contents:\n%s",
+        pretty_json.c_str()
+      );
+    }
     // std::cout << ExportBlackboardToJSON(*globalBlackboard()).dump() << std::endl;
     if (_publish_feedback) {return ExportBlackboardToJSON(*globalBlackboard()).dump();}
     return std::nullopt;

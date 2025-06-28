@@ -158,7 +158,7 @@ BT_REGISTER_ROS_NODES(factory, params)
   aug_params.nh = params.nh;
   aug_params.server_timeout = std::chrono::milliseconds(40000);   //Nav2 can take a while to respond, especialy in a container.
   //TODO: options.use_global_arguments(false) need to fix this for plguins somehow. also applies to client name
-  factory.registerNodeType<NavigateToPoseAction>("roamTo", aug_params);
+  factory.registerNodeType<NavigateToPoseAction>("NavigateToPose", aug_params);
 }
 
 }
