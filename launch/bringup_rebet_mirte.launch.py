@@ -19,12 +19,6 @@ def generate_launch_description():
         description="Run a test sleep tree",
     )
 
-    mytree_arg = DeclareLaunchArgument(
-        "my_tree",
-        default_value="",
-        description="Your tree",
-    )
-
     aal = Node(
         package='aal',
         executable='adaptation_layer',
@@ -45,7 +39,6 @@ def generate_launch_description():
         ),
         launch_arguments={
             'exercise': LaunchConfiguration('exercise'),
-            'my_tree': LaunchConfiguration('my_tree'),
             }.items()
     )
 
@@ -57,5 +50,5 @@ def generate_launch_description():
     )
 
     return LaunchDescription(
-        [mytree_arg, testing_arg, arborist, aal, groot, system_reflection]
+        [testing_arg, arborist, aal, groot, system_reflection]
     )

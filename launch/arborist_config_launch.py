@@ -19,16 +19,8 @@ def generate_launch_description():
         description="Run a test sleep tree",
     )
 
-    mytree_arg = DeclareLaunchArgument(
-        "my_tree",
-        default_value="",
-        description="Your tree",
-    )
-
-
     return LaunchDescription([
         testing_arg,
-        mytree_arg,
         Node(
             package='rebet_school',
             executable='mirte_arborist',
@@ -65,12 +57,12 @@ def generate_launch_description():
         Node(
             package="rebet_school",
             executable="tree_action_client.py",
-            arguments=[LaunchConfiguration("my_tree")],
+            arguments=['AdapQRs'],
             parameters=[
                 {
                     'autostart' : True
                 }
             ],
-            condition= LaunchConfigurationEquals('exercise', 'analysis')
+            condition= LaunchConfigurationEquals('exercise', 'execution')
         ),
     ])
