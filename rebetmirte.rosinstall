@@ -18,11 +18,11 @@ repositories:
   rebet_java:
     type: git
     url: https://github.com/EGAlberts/rebet_java.git
-    version: 2ab7083
+    version: 56798fe
   rebet_mirte:
     type: git
     url: https://github.com/EGAlberts/rebet_mirte.git
-    version: e99b861
+    version: 0e127f6
   mirte-ros-packages:
     type: git
     url: https://github.com/EGAlberts/mirte-ros-packages.git
@@ -51,3 +51,7 @@ repositories:
     type: git
     url: https://github.com/kas-lab/SDF_models.git
     version: main
+  ros_typedb:
+    type: git
+    url: https://github.com/EGAlberts/ros_typedb.git
+    version: 9824714

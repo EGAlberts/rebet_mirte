@@ -28,6 +28,10 @@ RUN pip install -U git+https://github.com/colcon/colcon-gradle
 RUN pip install --no-deps -U git+https://github.com/colcon/colcon-ros-gradle
 RUN pip install masced_bandits
 
+RUN curl -s https://raw.githubusercontent.com/kas-lab/ros_typedb/590c09cf7a3d2bfbf463c7e0d9367805a2376656/.github/workflows/install_typedb.sh | bash
+
+
+
 RUN curl -s "https://get.sdkman.io" | bash \
     && bash -c "source /root/.sdkman/bin/sdkman-init.sh && sdk install gradle 8.5"
     
